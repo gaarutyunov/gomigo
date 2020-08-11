@@ -1,0 +1,11 @@
+# Build folder
+build
+
+# VSCode
+.vscode
+
+# Intellij
+.idea
+
+# Pkged output
+pkged.go

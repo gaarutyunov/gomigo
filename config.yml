@@ -1,0 +1,2 @@
+db:
+  conn_str: postgresql://postgres:postgres@localhost:5432/vkanban
