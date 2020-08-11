@@ -19,8 +19,8 @@ type MigratorConfig struct {
 }
 
 type Migrator struct {
-	conn    *pgx.Conn
-	config  *MigratorConfig
+	conn   *pgx.Conn
+	config *MigratorConfig
 }
 
 func Connect(config *MigratorConfig) (*Migrator, error) {
@@ -157,7 +157,6 @@ func (m *Migrator) Remove(name string, dir string) error {
 func (m *Migrator) UpV(version int) (int, error) {
 	var oldV int
 	var diff []string
-	var newV int
 	tx, err := m.conn.Begin()
 
 	if err != nil {
@@ -168,7 +167,7 @@ func (m *Migrator) UpV(version int) (int, error) {
 		return -1, err
 	}
 
-	if err := tx.QueryRow(Diff, oldV, version, "ASC").Scan(&diff); err != nil {
+	if err := tx.QueryRow(DiffUp, oldV, version).Scan(&diff); err != nil {
 		return oldV, err
 	}
 
@@ -198,13 +197,12 @@ func (m *Migrator) UpV(version int) (int, error) {
 
 	log.Debugln(string(out))
 
-	return newV, nil
+	return version, nil
 }
 
 func (m *Migrator) DownV(version int) (int, error) {
 	var oldV int
 	var diff []string
-	var newV int
 	tx, err := m.conn.Begin()
 
 	if err != nil {
@@ -215,7 +213,7 @@ func (m *Migrator) DownV(version int) (int, error) {
 		return -1, err
 	}
 
-	if err := tx.QueryRow(Diff, oldV, version, "DESC").Scan(&diff); err != nil {
+	if err := tx.QueryRow(DiffDown, oldV, version).Scan(&diff); err != nil {
 		return oldV, err
 	}
 
@@ -245,7 +243,7 @@ func (m *Migrator) DownV(version int) (int, error) {
 
 	log.Debugln(string(out))
 
-	return newV, nil
+	return version, nil
 }
 
 func (m *Migrator) Up(migration *Migration, file pkging.File) (int, error) {

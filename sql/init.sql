@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS __migrations.history
 (
     id            BIGSERIAL PRIMARY KEY,
     registered_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    name          TEXT        NOT NULL UNIQUE,
-    version       INT         NOT NULL UNIQUE
+    name          TEXT      NOT NULL UNIQUE,
+    version       INT       NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS __migrations.state
@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS __migrations.audit
 (
     id             BIGSERIAL PRIMARY KEY,
     registered_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-    action         TEXT        NOT NULL,
-    migration_name TEXT        NOT NULL
+    action         TEXT      NOT NULL,
+    migration_name TEXT      NOT NULL
 );
 
 --- Indexes
@@ -111,28 +111,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
---- Upgrades to specific version (by version number)
-CREATE OR REPLACE FUNCTION __migrations.up(p_version INT DEFAULT NULL) RETURNS INT AS
-$$
-DECLARE
-    l_version         INT;
-    l_current_version INT;
-BEGIN
-    SELECT coalesce(p_version, max(version)) FROM __migrations.history INTO l_version;
-
-    SELECT __migrations.get_current_version() INTO l_current_version;
-
-    FOR i IN (l_current_version + 1)..l_version
-        LOOP
-            INSERT INTO __migrations.state (version, updated_at) VALUES (i, clock_timestamp());
-
-            PERFORM __migrations.audit_add((SELECT name FROM __migrations.history WHERE version = i), 'U');
-        END LOOP;
-
-    RETURN __migrations.get_current_version();
-END;
-$$ LANGUAGE plpgsql;
-
 --- Upgrades to specific migration (by migration name)
 CREATE OR REPLACE FUNCTION __migrations.up(p_name TEXT DEFAULT NULL) RETURNS INT AS
 $$
@@ -157,28 +135,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
---- Downgrades to specific version (by version number)
-CREATE OR REPLACE FUNCTION __migrations.down(p_version INT DEFAULT NULL) RETURNS INT AS
-$$
-DECLARE
-    l_version         INT;
-    l_current_version INT;
-BEGIN
-    SELECT coalesce(p_version, 0) INTO l_version;
-
-    SELECT __migrations.get_current_version() INTO l_current_version;
-
-    FOR i IN REVERSE l_current_version..(l_version + 1)
-        LOOP
-            DELETE FROM __migrations.state WHERE version = i;
-
-            PERFORM __migrations.audit_add((SELECT name FROM __migrations.history WHERE version = i), 'D');
-        END LOOP;
-
-    RETURN __migrations.get_current_version();
-END;
-$$ LANGUAGE plpgsql;
-
 --- Downgrade to specific migration (by migration name)
 CREATE OR REPLACE FUNCTION __migrations.down(p_name TEXT DEFAULT NULL) RETURNS INT AS
 $$
@@ -190,10 +146,10 @@ BEGIN
 
     SELECT __migrations.get_current_version() INTO l_current_version;
 
-    FOR i IN REVERSE l_current_version..(l_version + 1)
-        LOOP
-            DELETE FROM __migrations.state WHERE version = i;
+    DELETE FROM __migrations.state WHERE version IN (SELECT generate_series(l_version, l_current_version));
 
+    FOR i IN REVERSE l_current_version..(l_version)
+        LOOP
             PERFORM __migrations.audit_add((SELECT name FROM __migrations.history WHERE version = i), 'D');
         END LOOP;
 
@@ -246,19 +202,36 @@ END;
 $$ LANGUAGE plpgsql;
 
 --- Returns migration names between specific versions (from, to]
-CREATE OR REPLACE FUNCTION __migrations.get_diff(p_version_from INT, p_version_to INT, p_direction TEXT DEFAULT NULL) RETURNS TEXT[] AS
+CREATE OR REPLACE FUNCTION __migrations.get_diff_up(p_version_from INT, p_version_to INT) RETURNS TEXT[] AS
 $$
 DECLARE
     l_migrations TEXT[];
 BEGIN
     SELECT array_agg(a_1.name)
     FROM __migrations.history a_1
-    WHERE a_1.version BETWEEN p_version_from + 1 AND p_version_to
-    GROUP BY a_1.version
-    ORDER BY p_direction
-           , CASE WHEN p_direction = 'DESC' THEN a_1.version END DESC
+    WHERE a_1.version > p_version_from AND a_1.version <= p_version_to
     INTO l_migrations;
 
     RETURN l_migrations;
 END;
-$$ LANGUAGE plpgsql
+$$ LANGUAGE plpgsql;
+
+--- Returns migration names between specific versions (from, to]
+CREATE OR REPLACE FUNCTION __migrations.get_diff_down(p_version_from INT, p_version_to INT) RETURNS TEXT[] AS
+$$
+DECLARE
+    l_migrations TEXT[];
+BEGIN
+    WITH ordered AS (
+        SELECT a_1.*
+        FROM __migrations.history a_1
+        ORDER BY a_1.version DESC
+    )
+    SELECT array_agg(a_1.name)
+    FROM ordered a_1
+    WHERE a_1.version <= p_version_from AND a_1.version > p_version_to
+    INTO l_migrations;
+
+    RETURN l_migrations;
+END;
+$$ LANGUAGE plpgsql;

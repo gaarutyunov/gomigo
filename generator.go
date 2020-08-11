@@ -60,7 +60,7 @@ func (g *generator) Build() ([]byte, error) {
 		return nil, err
 	}
 
-	cmd = exec.Command("go", "build", g.File.Name())
+	cmd = exec.Command("go", "build")
 
 	if out, err := cmd.CombinedOutput(); err != nil {
 		log.Errorln(string(out))
