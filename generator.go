@@ -52,9 +52,9 @@ func (g *generator) Generate() {
 }
 
 func (g *generator) Build() ([]byte, error) {
-	cmd := exec.Command("go", "-i", "-o", "main", g.File.Name())
+	cmd := exec.Command("go", "build", g.File.Name())
 
-	if out, err := cmd.Output(); err != nil {
+	if out, err := cmd.CombinedOutput(); err != nil {
 		log.Errorln(out)
 
 		return nil, err
@@ -62,5 +62,5 @@ func (g *generator) Build() ([]byte, error) {
 
 	cmd = exec.Command("./main")
 
-	return cmd.Output()
+	return cmd.CombinedOutput()
 }

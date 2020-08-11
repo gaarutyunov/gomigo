@@ -191,10 +191,12 @@ func (m *Migrator) UpV(version int) (int, error) {
 	out, err := g.Build()
 
 	if err != nil {
+		log.Errorln(string(out))
+
 		return oldV, err
 	}
 
-	fmt.Println(out)
+	log.Debugln(out)
 
 	return newV, nil
 }
