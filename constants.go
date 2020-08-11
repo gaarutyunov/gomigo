@@ -6,7 +6,7 @@ const (
 	Remove          = "SELECT * FROM __migrations.remove($1);"
 	Up              = "SELECT * FROM __migrations.up($1);"
 	Down            = "SELECT * FROM __migrations.down($1);"
-	Diff            = "SELECT * FROM __migrations.get_diff($1, $2);"
+	Diff            = "SELECT * FROM __migrations.get_diff($1, $2, $3);"
 	CurrentVersion  = "SELECT * FROM __migrations.get_current_version();"
 	Layout          = "20060102150405"
 	MigrateTemplate = `package m%[1]s

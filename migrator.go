@@ -168,7 +168,7 @@ func (m *Migrator) UpV(version int) (int, error) {
 		return -1, err
 	}
 
-	if err := tx.QueryRow(Diff, oldV, version).Scan(&diff); err != nil {
+	if err := tx.QueryRow(Diff, oldV, version, "ASC").Scan(&diff); err != nil {
 		return oldV, err
 	}
 
@@ -196,7 +196,54 @@ func (m *Migrator) UpV(version int) (int, error) {
 		return oldV, err
 	}
 
-	log.Debugln(out)
+	log.Debugln(string(out))
+
+	return newV, nil
+}
+
+func (m *Migrator) DownV(version int) (int, error) {
+	var oldV int
+	var diff []string
+	var newV int
+	tx, err := m.conn.Begin()
+
+	if err != nil {
+		return -1, err
+	}
+
+	if err := tx.QueryRow(CurrentVersion).Scan(&oldV); err != nil {
+		return -1, err
+	}
+
+	if err := tx.QueryRow(Diff, oldV, version, "DESC").Scan(&diff); err != nil {
+		return oldV, err
+	}
+
+	f, err := os.Create("main.go")
+
+	if err != nil {
+		return oldV, err
+	}
+
+	g := &generator{
+		ConnStr:    m.config.ConnStr,
+		Module:     m.config.Module,
+		Migrations: diff,
+		Function:   "Down",
+		File:       f,
+	}
+
+	g.Generate()
+
+	out, err := g.Build()
+
+	if err != nil {
+		log.Errorln(string(out))
+
+		return oldV, err
+	}
+
+	log.Debugln(string(out))
 
 	return newV, nil
 }

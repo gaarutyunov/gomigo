@@ -52,10 +52,18 @@ func (g *generator) Generate() {
 }
 
 func (g *generator) Build() ([]byte, error) {
-	cmd := exec.Command("go", "build", g.File.Name())
+	cmd := exec.Command("pkger")
 
 	if out, err := cmd.CombinedOutput(); err != nil {
-		log.Errorln(out)
+		log.Errorln(string(out))
+
+		return nil, err
+	}
+
+	cmd = exec.Command("go", "build", g.File.Name())
+
+	if out, err := cmd.CombinedOutput(); err != nil {
+		log.Errorln(string(out))
 
 		return nil, err
 	}

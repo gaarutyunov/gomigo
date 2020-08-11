@@ -119,7 +119,7 @@ func doUp(conn *gomigo.Migrator, version int) {
 }
 
 func doDown(conn *gomigo.Migrator, version int) {
-	v, err := conn.UpV(version)
+	v, err := conn.DownV(version)
 
 	if err != nil {
 		log.Fatalf("error downgrading migrations: %v", err)

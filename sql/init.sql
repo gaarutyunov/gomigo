@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS __migrations.history
 (
     id            BIGSERIAL PRIMARY KEY,
     registered_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    name          TEXT      NOT NULL UNIQUE,
-    version       INT       NOT NULL UNIQUE
+    name          TEXT        NOT NULL UNIQUE,
+    version       INT         NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS __migrations.state
@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS __migrations.audit
 (
     id             BIGSERIAL PRIMARY KEY,
     registered_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-    action         TEXT      NOT NULL,
-    migration_name TEXT      NOT NULL
+    action         TEXT        NOT NULL,
+    migration_name TEXT        NOT NULL
 );
 
 --- Indexes
@@ -246,7 +246,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 --- Returns migration names between specific versions (from, to]
-CREATE OR REPLACE FUNCTION __migrations.get_diff(p_version_from INT, p_version_to INT) RETURNS TEXT[] AS
+CREATE OR REPLACE FUNCTION __migrations.get_diff(p_version_from INT, p_version_to INT, p_direction TEXT DEFAULT NULL) RETURNS TEXT[] AS
 $$
 DECLARE
     l_migrations TEXT[];
@@ -255,7 +255,8 @@ BEGIN
     FROM __migrations.history a_1
     WHERE a_1.version BETWEEN p_version_from + 1 AND p_version_to
     GROUP BY a_1.version
-    ORDER BY a_1.version
+    ORDER BY p_direction
+           , CASE WHEN p_direction = 'DESC' THEN a_1.version END DESC
     INTO l_migrations;
 
     RETURN l_migrations;
