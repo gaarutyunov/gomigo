@@ -14,6 +14,7 @@ var commands = map[string]string{
 	"clean": "cleans migrations",
 	"down": "downgrades to specific version (requires -version option)",
 	"up": "upgrades to specific version (requires -version option)",
+	"remove": "removes a migration (requires -name option)",
 }
 
 func main() {
@@ -53,8 +54,8 @@ func printCommand(name string) {
 
 func doMain(args *gomigo.Args) {
 	conn, err := gomigo.Connect(&gomigo.MigratorConfig{
-		Module:  "github.com/gaarutyunov/gomigo",
-		ConnStr: "postgresql://postgres:postgres@localhost:5432/vkanban",
+		Module:  args.Module,
+		ConnStr: args.ConnStr,
 	})
 
 	if err != nil {
