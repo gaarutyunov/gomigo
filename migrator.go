@@ -107,9 +107,34 @@ func (m *Migrator) Clean() error {
 	return nil
 }
 
-func (m *Migrator) Update() error {
+func (m *Migrator) Update(dir string) error {
+	d, err := os.Open(dir)
 
-	return nil
+	if err != nil {
+		return err
+	}
+
+	names, err := d.Readdirnames(-1)
+
+	tx, err := m.conn.Begin()
+
+	if err != nil {
+		return err
+	}
+
+	for _, name := range names {
+		migration := &Migration{Name: name}
+
+		err = doAdd(migration, dir, tx)
+
+		if err != nil {
+			_ = tx.Rollback()
+
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (m *Migrator) Add(name string, dir string) error {

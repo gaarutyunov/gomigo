@@ -1,6 +1,6 @@
 # gomigo
 
-Migration engine for PostgreSQL written in go.
+Migration engine for PostgreSQL written in Go.
 
 ### Features
 
@@ -29,6 +29,14 @@ down.sql is executed to downgrade database
 
 ### Usage
 
+1. Install dependencies
+
+2. Install gomigo
+
+3. Create Go Module
+
+4. Execute in command line:
+
 ```bash
 Usage:
 
@@ -48,6 +56,9 @@ Commands:
          upgrades to specific version (requires -version option)
    down
          downgrades to specific version (requires -version option)
+   update
+         updates migrations
+
 
 Options:
 

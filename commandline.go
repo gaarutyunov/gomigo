@@ -8,6 +8,7 @@ type Args struct {
 	Name    string
 	Module  string
 	ConnStr string
+	GenOnly bool
 }
 
 func Parse(args *Args) {
@@ -15,6 +16,7 @@ func Parse(args *Args) {
 	var name = flag.String("name", "", "migration name")
 	var module = flag.String("module", "", "module name")
 	var connStr = flag.String("db", "", "database connection string")
+	var genOnly = flag.Bool("gen-only", false, "if true only generates executable without applying migrations")
 
 	flag.Parse()
 
@@ -25,4 +27,5 @@ func Parse(args *Args) {
 	args.Name = *name
 	args.Module = *module
 	args.ConnStr = *connStr
+	args.GenOnly = *genOnly
 }

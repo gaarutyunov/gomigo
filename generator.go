@@ -13,6 +13,7 @@ type generator struct {
 	Migrations []string
 	Function   string
 	File       *os.File
+	GenOnly    bool
 }
 
 func (g *generator) Generate() {
@@ -61,6 +62,10 @@ func (g *generator) Build() ([]byte, error) {
 	}
 
 	cmd = exec.Command("go", "build")
+
+	if g.GenOnly {
+		return cmd.CombinedOutput()
+	}
 
 	if out, err := cmd.CombinedOutput(); err != nil {
 		log.Errorln(string(out))

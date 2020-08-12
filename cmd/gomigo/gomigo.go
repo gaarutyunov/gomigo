@@ -15,6 +15,7 @@ var commands = map[string]string{
 	"remove": "removes a migration (requires -name option)",
 	"up": "upgrades to specific version (requires -version option)",
 	"down": "downgrades to specific version (requires -version option)",
+	"update": "updates migrations",
 }
 
 func main() {
@@ -94,6 +95,8 @@ func doMain(args *gomigo.Args) {
 			os.Exit(1)
 		}
 		doRemove(conn, args.Name)
+	case "update":
+		doUpdate(conn)
 	}
 }
 
@@ -143,4 +146,12 @@ func doRemove(conn *gomigo.Migrator, name string) {
 	}
 
 	log.Infof("removed migration: %s", name)
+}
+
+func doUpdate(conn *gomigo.Migrator) {
+	if err := conn.Update("migrations"); err != nil {
+		log.Fatalf("error updating migrations: %v", err)
+	}
+
+	log.Info("updated migrations")
 }
