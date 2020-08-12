@@ -9,12 +9,12 @@ import (
 )
 
 var commands = map[string]string{
-	"add": "adds new migration (requires -name option)",
 	"init": "initializes migrations",
 	"clean": "cleans migrations",
-	"down": "downgrades to specific version (requires -version option)",
-	"up": "upgrades to specific version (requires -version option)",
+	"add": "adds new migration (requires -name option)",
 	"remove": "removes a migration (requires -name option)",
+	"up": "upgrades to specific version (requires -version option)",
+	"down": "downgrades to specific version (requires -version option)",
 }
 
 func main() {
@@ -41,7 +41,8 @@ func usage() {
 	for name := range commands {
 		printCommand(name)
 	}
-	fmt.Println("generator:")
+	fmt.Println()
+	fmt.Println("Options:")
 	fmt.Println()
 	flag.PrintDefaults()
 	fmt.Println()
